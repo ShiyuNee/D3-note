@@ -73,5 +73,40 @@ d3.json("../html/titanic_disaster.json", function(error, data) {
     .attr("fill" , "#fcfcfc")
     .text("female");
 
+  var width = 30
+  var height = 10
+  var left = 570
+  var top = 510
+  var textClass = ["first" , "second" , "third" , "crew"]
+
+  svg3.selectAll(".treeRect")
+    .data(textClass)
+    .enter()
+    .append("rect")
+    .attr("class" , "treeRect")
+    .attr("x" , left)
+    .attr("y" , function(d,i){
+      return top + i * 2 * (height + 3)
+    })
+    .attr("width" , width)
+    .attr("height" , height)
+    .attr("fill" , function(d , i){
+      return colors[i]
+    })
+
+  svg3.selectAll(".treeText")
+    .data(textClass)
+    .enter()
+    .append("text")
+    .attr("class" , "treeText")
+    .attr("x" , left)
+    .attr("y" , function(d,i){
+      return top + i * 2 * (height + 3)
+    })
+
+    .text(function(d,i){
+      return d
+    })
+
 
 })

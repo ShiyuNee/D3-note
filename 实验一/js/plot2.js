@@ -10,7 +10,7 @@ d3.csv("../html/titanic_disaster.csv" , function(error , csvdata) {
   var data_male2 = Array(0)
   var tot_data = Array()
   var leftup = 410
-  var left = 700
+  var left = 800
   var width = 30
   var classs = ["" , "first" , "second" , "third" , "crew" , ""]
   var x_ordinal = Array()
@@ -24,6 +24,7 @@ d3.csv("../html/titanic_disaster.csv" , function(error , csvdata) {
     data_female2.push(csvdata[i].Count)
     tot_data.push(csvdata[i].Count)
   }
+
   for(let i = 1 ; i < 8 ; i += 2){
     data_male2.push(csvdata[i].Count)
     tot_data.push(csvdata[i].Count)

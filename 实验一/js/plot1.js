@@ -7,13 +7,10 @@ d3.csv("../html/titanic_disaster.csv" , function(error , csvdata){
   if (error){
     console.log(error)
   }
-  console.log(csvdata)
-  console.log(csvdata[0].Count)
   // 不同班级的数据 ， 第一个是女生个数 ， 第二个是男生个数
   for(let i = 0 ; i <= 6 ; i = i + 2){
     data.push([csvdata[i].Count , csvdata[i+1].Count])
   }
-  console.log(data)
 
   var pie = d3.layout.pie()
   var getpiedata = Array(0)
