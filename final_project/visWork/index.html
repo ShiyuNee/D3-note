@@ -1,0 +1,2567 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <!-- 引入 ECharts 文件 -->
+  <script src="../echarts.min.js"></script>
+  <script src="../d3.v5.min.js"></script>
+  <script src="../jquery.js"></script>
+  <script src="geojs/world.js"></script>
+  <title>可视化大作业</title>
+</head>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Poppins", sans-serif;
+  }
+
+  body {
+
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    min-width: 1000px;
+    z-index: -10;
+    zoom: 1;
+    background-color: rgba(0,0,60,.85);
+  }
+
+  .box {
+    position: absolute;
+
+    z-index: 320;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    box-shadow: rgba(153,217,234, 0.9) 0px 0px 3px inset;
+    background: linear-gradient(to left, #00A2E8, #00A2E8) left top no-repeat,
+    linear-gradient(to bottom, #00A2E8, #00A2E8) left top no-repeat,
+    linear-gradient(to left, #00A2E8, #00A2E8) right top no-repeat,
+    linear-gradient(to bottom, #00A2E8, #00A2E8) right top no-repeat,
+    linear-gradient(to left, #00A2E8, #00A2E8) left bottom no-repeat,
+    linear-gradient(to bottom, #00A2E8, #00A2E8) left bottom no-repeat,
+    linear-gradient(to left, #00A2E8, #00A2E8) right bottom no-repeat,
+    linear-gradient(to left,#00A2E8, #00A2E8) right bottom no-repeat;
+    background-size: 3px 10px, 10px 3px, 3px 10px, 10px 3px;
+  }
+
+
+
+  .gx path {
+    /* //设置坐标轴整个长线的 */
+    fill: none;
+    stroke: white;
+    shape-rendering: crispEdges;
+  }
+
+  .gx line {
+    /* //设置坐标轴长线上的小间隔短线 */
+    fill: none;
+    stroke: white;
+    shape-rendering: crispEdges;
+  }
+
+  .gx text {
+    /* //设置坐标轴文字 */
+    font-family: sans-serif;
+    font-size: 10px;
+    color: white;
+  }
+
+  .yg path {
+    /* //设置坐标轴整个长线的 */
+    fill: none;
+    stroke: white;
+    shape-rendering: crispEdges;
+  }
+
+  .yg line {
+    /* //设置坐标轴长线上的小间隔短线 */
+    fill: none;
+    stroke: white;
+    shape-rendering: crispEdges;
+  }
+
+  .yg text {
+    /* //设置坐标轴文字 */
+    font-family: sans-serif;
+    font-size: 10px;
+    color: white;
+  }
+
+  .button-56 {
+    align-items: center;
+    background-color: #fee6e3;
+    border: 2px solid #fcfcfc;
+    border-radius: 8px;
+    box-sizing: border-box;
+    color: #111;
+    cursor: pointer;
+    display: flex;
+    font-family: Inter, sans-serif;
+    font-size: 10px;
+    height: 30px;
+    justify-content: center;
+    line-height: 24px;
+    max-width: 100%;
+    padding: 0 25px;
+    position: absolute;
+    top: 10px;
+    right: 100px;
+    text-align: center;
+    text-decoration: none;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+
+  .button-56:after {
+    background-color: #111;
+    border-radius: 8px;
+    content: "";
+    display: block;
+    height: 48px;
+    left: 0;
+    width: 100%;
+    position: absolute;
+    top: -2px;
+    transform: translate(8px, 8px);
+    transition: transform 0.2s ease-out;
+    z-index: -1;
+  }
+
+  .button-56:hover:after {
+    transform: translate(0, 0);
+  }
+
+  .button-56:active {
+    background-color: #ffdeda;
+    outline: 0;
+  }
+
+  .button-56:hover {
+    outline: 0;
+  }
+
+  @media (min-width: 768px) {
+    .button-56 {
+      padding: 0 40px;
+    }
+  }
+</style>
+
+<body>
+
+  <!-- 背景图 -->
+  <div id="Layer1" style="position:fixed; left:0px; top:0px; width:100%; height:100%;opacity:1"><img src="svg/b.png" width="100%" height="100%"/></div>
+  <!-- 菜单栏 -->
+  <div id="menu" class="box" style="top: 10px; right: 392px; height: 89px; width: 759px"></div>
+  <!-- 地图和条形图 -->
+  <div id="map-bar" class="box" style="top: 112px; right: 392px; height: 400px; width: 759px"></div>
+  <!-- 树图 -->
+  <div id="treemap" class="box" style="top: 400px; left: 10px; height: 335px; width: 350px"></div>
+  <!-- 旭日图 -->
+  <div id="container" class="box" style="top: 12px; left: 10px; height: 370px; width: 350px"></div>
+  <!-- d3堆叠条形图 -->
+  <div class="box" id="nsy" style="top: 10px; right: 10px; height: 501px; width: 368px">
+    <button class="button-56" role="button" style="margin: auto" onclick="readAndDraw()">
+      Change Order
+    </button>
+    <a href="d3Detail.html" style="
+          color: white;
+          position: absolute;
+          top: 2px;
+          left: 2px;
+          font-size: 5px;
+        ">跳转</a>
+  </div>
+  <!-- 仪表盘机器学习模型 -->
+  <div id="hill" class="box" style="top: 530px; right: 372px; height: 200px; width: 780px"></div>
+  <div id="svg" class="box" style="top: 530px; right: 10px; height: 200px; width: 348px"></div>
+  <!-- 旭日图 -->
+  <script>
+    var dom = document.getElementById("container");
+    var col = "Alcoholic Beverages";
+    var myChart = echarts.init(dom);
+    var option;
+    const colors = [
+      "#ff595e",
+      "#fb5607",
+      "#ff006e",
+      "#8338ec",
+      "#3a86ff",
+      "#f72585",
+      "#d100d1",
+      "#cb0b0a",
+      "#4361ee",
+      "#4cc9f0",
+      "#9e2a2b",
+      "#2d00f7",
+      "#5a189a",
+      "#3c096c",
+    ];
+    const bgColor = "#0f2444";
+    const itemStyle = {
+      star0: {
+        color: colors[0],
+      },
+      star1: {
+        color: colors[1],
+      },
+      star2: {
+        color: colors[2],
+      },
+      star3: {
+        color: colors[3],
+      },
+      star4: {
+        color: colors[4],
+      },
+      star5: {
+        color: colors[5],
+      },
+      star6: {
+        color: colors[6],
+      },
+      star7: {
+        color: colors[7],
+      },
+      star8: {
+        color: colors[8],
+      },
+      star9: {
+        color: colors[9],
+      },
+      star10: {
+        color: colors[10],
+      },
+      star11: {
+        color: colors[11],
+      },
+      star12: {
+        color: colors[12],
+      },
+    };
+    const thedata = [
+      {
+        name: "\n🍿🍳🧇🥞\n食物种类\n🧀🥗🧈🍨\n\n\n\n",
+        itemStyle: {
+          color: colors[0], //中心的颜色
+        },
+        children: [
+          {
+            name: "🍺酒精饮料",
+            children: [
+              {
+                name: "🍸🍷🍶🍾",
+                children: [
+                  {
+                    name: "酿造酒",
+                  },
+                  {
+                    name: "露酒",
+                  },
+                  {
+                    name: "蒸馏酒",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            name: "其他",
+            children: [
+              {
+                name: "🍯🌴🌵🌿",
+                children: [
+                  {
+                    name: "内脏",
+                  },
+                  {
+                    name: "油料作物",
+                  },
+                  {
+                    name: "豆类",
+                  },
+                  {
+                    name: "香料",
+                  },
+                  {
+                    name: "树坚果",
+                  },
+                  {
+                    name: "植物油",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            name: "🐟鱼和海鲜",
+            children: [
+              {
+                name: "🦪🍤🍥",
+                children: [
+                  {
+                    name: "甲壳动物",
+                  },
+                  {
+                    name: "软体动物",
+                  },
+                  {
+                    name: "淡水鱼",
+                  },
+                  {
+                    name: "底栖鱼",
+                  },
+                  {
+                    name: "其它",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            name: "🍚谷物",
+            children: [
+              {
+                name: "🍜🌾🍘🍝",
+                children: [
+                  {
+                    name: "玉米🌽",
+                  },
+                  {
+                    name: "大麦",
+                  },
+                  {
+                    name: "大米",
+                  },
+                  {
+                    name: "小米",
+                  },
+                  {
+                    name: "高粱",
+                  },
+                  {
+                    name: "小麦",
+                  },
+                  {
+                    name: "其它",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            name: "蛋类🥚",
+            children: [
+              {
+                name: "🦆🐓🦢🐣",
+                children: [
+                  {
+                    name: "鸡蛋",
+                  },
+                  {
+                    name: "鸭蛋",
+                  },
+                  {
+                    name: "鹌鹑蛋",
+                  },
+                  {
+                    name: "其它",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            name: "肉类🥩",
+            children: [
+              {
+                name: "🍖🍗🥩",
+                children: [
+                  {
+                    name: "牛肉🐂",
+                  },
+                  {
+                    name: "羊肉🐏",
+                  },
+                  {
+                    name: "猪肉🐖",
+                  },
+                  {
+                    name: "鸡肉🐔",
+                  },
+                  {
+                    name: "其它",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            name: "奶类🥛",
+            children: [
+              {
+                name: "🧂🍼🥛",
+                children: [
+                  {
+                    name: "牛奶",
+                  },
+                  {
+                    name: "羊奶",
+                  },
+                  {
+                    name: "骆驼奶",
+                  },
+                  {
+                    name: "其它",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            name: "糖和糖类\n作物🍬",
+            children: [
+              {
+                name: "🍬🍭🍫",
+                children: [
+                  {
+                    name: "甘蔗",
+                  },
+                  {
+                    name: "甜菜",
+                  },
+                  {
+                    name: "糖",
+                  },
+                  {
+                    name: "其它",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            name: "蔬果🥦",
+            children: [
+              {
+                name: "🍍🍆🥔🍊",
+                children: [
+                  {
+                    name: "黄瓜🥒",
+                  },
+                  {
+                    name: "番茄🍅",
+                  },
+                  {
+                    name: "香蕉🍌",
+                  },
+                  {
+                    name: "苹果🍎",
+                  },
+                  {
+                    name: "其它",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ];
+    for (let j = 0; j < thedata.length; ++j) {
+      let level1 = thedata[j].children;
+      for (let i = 0; i < level1.length; ++i) {
+        let block = level1[i].children;
+        let bookScore = [];
+        let bookScoreId;
+        for (let star = 0; star < block.length; ++star) {
+          let style = (function (name) {
+            switch (name) {
+              case "🍍🍆🥔🍊":
+                bookScoreId = 0;
+                return itemStyle.star1;
+              case "🍖🍗🥩":
+                bookScoreId = 1;
+                return itemStyle.star2;
+              case "🦪🍤🍥":
+                bookScoreId = 2;
+                return itemStyle.star3;
+              case "🍜🌾🍘🍝":
+                bookScoreId = 3;
+                return itemStyle.star4;
+              case "🍸🍷🍶🍾":
+                bookScoreId = 4;
+                return itemStyle.star5;
+              case "🍯🌴🌵🌿":
+                bookScoreId = 5;
+                return itemStyle.star6;
+              case "🦆🐓🦢🐣":
+                bookScoreId = 6;
+                return itemStyle.star7;
+              case "🧂🍼🥛":
+                bookScoreId = 7;
+                return itemStyle.star8;
+              case "🍬🍭🍫":
+                bookScoreId = 8;
+                return itemStyle.star9;
+            }
+          })(block[star].name);
+          block[star].label = {
+            color: style.color,
+            downplay: {
+              opacity: 0.5,
+            },
+          };
+          if (block[star].children) {
+            style = {
+              opacity: 1,
+              color: style.color,
+            };
+            block[star].children.forEach(function (book) {
+              book.value = 1;
+              book.itemStyle = style;
+              book.label = {
+                color: style.color,
+              };
+              let value = 1;
+              if (bookScoreId === 0 || bookScoreId === 3) {
+                value = 5;
+              }
+              if (bookScore[bookScoreId]) {
+                bookScore[bookScoreId].value += value;
+              } else {
+                bookScore[bookScoreId] = {
+                  color: colors[bookScoreId],
+                  value: value,
+                };
+              }
+            });
+          }
+        }
+        level1[i].itemStyle = {
+          color: thedata[j].itemStyle.color,
+        };
+      }
+    }
+    option = {
+      //backgroundColor: bgColor, //背景颜色
+      color: colors,
+      series: [
+        {
+          type: "sunburst",
+          center: ["50%", "50%"],
+          data: thedata,
+          sort: function (a, b) {
+            if (a.depth === 1) {
+              return b.getValue() - a.getValue();
+            } else {
+              return a.dataIndex - b.dataIndex;
+            }
+          },
+          label: {
+            rotate: "radial",
+            color: bgColor,
+          },
+          itemStyle: {
+            borderColor: bgColor, //框的颜色
+            borderWidth: 2,
+          },
+          levels: [
+            {},
+            {
+              r0: 0,
+              r: 35,
+              label: {
+                rotate: 0, //中心圆中字符旋转角度
+              },
+            },
+            {
+              r0: 40,
+              r: 103,
+            },
+            {
+              r0: 115,
+              r: 140,
+              itemStyle: {
+                shadowBlur: 2,
+                shadowColor: colors[2],
+                color: "transparent",
+              },
+              label: {
+                rotate: "tangential",
+                fontSize: 10,
+                color: colors[0],
+              },
+            },
+            {
+              r0: 140,
+              r: 145,
+              itemStyle: {
+                shadowBlur: 80, //光环大小
+                shadowColor: "colors[0]",
+              },
+              label: {
+                position: "outside", //一圈字所处位置
+                textShadowBlur: 5,
+                textShadowColor: "#333",
+              },
+              downplay: {
+                label: {
+                  opacity: 0.5,
+                },
+              },
+            },
+          ],
+        },
+      ],
+    };
+    myChart.setOption(option);
+    myChart.on("click", function (params) {
+      if (params.dataIndex == 2) {
+        col = "Alcoholic Beverages";
+        changeView();
+      } else if (params.dataIndex == 56) {
+        col = "FruitsAndVegetabels";
+        changeView();
+      } else if (params.dataIndex == 37) {
+        col = "Animal Products";
+        changeView();
+      } else if (params.dataIndex == 22) {
+        col = "Cereals";
+        changeView();
+      } else if (params.dataIndex == 31) {
+        col = "Eggs";
+        changeView();
+      } else if (params.dataIndex == 15) {
+        col = "Seafood";
+        changeView();
+      } else if (params.dataIndex == 44) {
+        col = "Milk";
+        changeView();
+      } else if (params.dataIndex == 50) {
+        col = "Sugar";
+        changeView();
+      } else if (params.dataIndex == 7) {
+        col = "Else";
+        changeView();
+      }
+    });
+  </script>
+  <!-- 菜单部分 -->
+  <script>
+    var myMenu = echarts.init(document.getElementById("menu"));
+    var tableName = "1";
+    const MenuOption = {
+      title: {
+        left: 0,
+        top: "middle",
+        textStyle: {
+          color: "#2ec4b6",
+          fontSize: 25,
+        },
+        text: "  摄入类型",
+      },
+      toolbox: {
+        itemSize: 45,
+        itemGap: 70,
+        left: "30%",
+        top: "middle",
+        feature: {
+          //脂肪摄入量百分比按钮
+          myFatbutton: {
+            show: true,
+            title: "脂肪摄入量",
+            icon: "image://svg/fat.svg",
+            onclick: function () {
+              tableName = "1";
+              readData("1");
+
+              chart = "1.csv";
+              dataName = "data/" + chart;
+              readdata(dataName);
+
+              mapOption.series[0].data = data;
+              mapOption.title.text =
+                "世界各国脂肪摄入量来自于 " + col + " 的占比";
+              barOption.series.data = data.map(function (item) {
+                return item.value;
+              });
+              barOption.yAxis.data = data.map(function (item) {
+                return item.name;
+              });
+
+              mychart.clear();
+              changeOption(nowOption);
+            },
+          },
+          //食物摄入量百分比
+          myFoodbutton: {
+            show: true,
+            title: "食物摄入量",
+            icon: "image://svg/rice.svg",
+            onclick: function () {
+              tableName = "3";
+              readData("3");
+
+              chart = "3.csv";
+              dataName = "data/" + chart;
+              readdata(dataName);
+
+              mapOption.series[0].data = data;
+              mapOption.title.text =
+                "世界各国食物摄入总量来自于 " + col + " 的占比";
+              barOption.series.data = data.map(function (item) {
+                return item.value;
+              });
+              barOption.yAxis.data = data.map(function (item) {
+                return item.name;
+              });
+              mychart.clear();
+              changeOption(nowOption);
+            },
+          },
+          //热量摄入量百分比
+          myKalulibutton: {
+            show: true,
+            title: "热量摄入量",
+            icon: "image://svg/kaluli.svg",
+            onclick: function () {
+              tableName = "2";
+              readData("2");
+
+              chart = "2.csv";
+              dataName = "data/" + chart;
+              readdata(dataName);
+
+              mapOption.series[0].data = data;
+              mapOption.title.text =
+                "世界各国热量摄入来自于 " + col + " 的占比";
+              barOption.series.data = data.map(function (item) {
+                return item.value;
+              });
+              barOption.yAxis.data = data.map(function (item) {
+                return item.name;
+              });
+
+              mychart.clear();
+              changeOption(nowOption);
+            },
+          },
+          //蛋白质摄入量百分比
+          myProteinbutton: {
+            show: true,
+            title: "蛋白质摄入量",
+            icon: "image://svg/protein.svg",
+            onclick: function () {
+              tableName = "4";
+              readData("4");
+
+              chart = "4.csv";
+              dataName = "data/" + chart;
+              readdata(dataName);
+
+              mapOption.title.text =
+                "世界各国蛋白摄入来自于 " + col + " 的占比";
+              mapOption.series[0].data = data;
+              barOption.series.data = data.map(function (item) {
+                return item.value;
+              });
+              barOption.yAxis.data = data.map(function (item) {
+                return item.name;
+              });
+              mychart.clear();
+              changeOption(nowOption);
+            },
+          },
+        },
+      },
+    };
+    myMenu.setOption(MenuOption, true);
+  </script>
+  <!-- 矩形树图 -->
+  <script>
+    //选择哪个表
+    var chart = "1.csv";
+    //选择哪个国家
+    var guojia = "Albania";
+
+    // 基于准备好的dom，初始化echarts实例
+    var mytree = echarts.init(document.getElementById("treemap"));
+
+    var dataName = "data/" + chart;
+
+    //存储新数据(name:+value:)
+    var newData = new Array();
+    //存储每个value
+    var valuerData = new Array();
+
+    //存储矩阵树图的数据
+    var treeData = new Array();
+    var tmp = new Array();
+
+    function readdata(dataName) {
+      // console.log(dataName)
+      newData = [];
+      valuerData = [];
+      treeData = [];
+      tmp = [];
+      d3.csv(dataName).then((dataSet) => {
+        for (var i = 0; i < dataSet.length; i++) {
+          if (dataSet[i].Country === guojia) tmp = dataSet[i];
+        }
+        // console.log(tmp);
+        delete tmp.Country;
+
+        for (x in tmp) {
+          var p = {};
+          p.name = x; //得到属性名
+          p.value = tmp[x]; //得到对应值
+          var q = {};
+          q.name = x;
+          q.max = 60;
+
+          newData.push(p); //存储数据
+          valuerData.push(tmp[x]);
+          if (x === "Else") break;
+        }
+        //存储Else包含的属性
+        var ElseData = new Array();
+
+        var index = -1;
+        for (x in tmp) {
+          index++; //第index属性
+          if (index >= 9 && index <= 19) {
+            var p = {};
+            p.name = x;
+            p.value = tmp[x];
+            ElseData.push(p);
+          }
+        }
+
+        for (x in tmp) {
+          var p = {};
+          p.name = x; //得到属性名
+          p.value = tmp[x]; //得到对应值
+          p.children = [];
+          if (x === "Else") {
+            p.children = ElseData;
+            treeData.push(p);
+            break;
+          } else treeData.push(p);
+        }
+
+        var text;
+        if (tableName === "1") {
+          text = guojia + " 脂肪摄入的组成结构";
+        } else if (tableName === "2") {
+          text = guojia + " 热量摄入的组成结构";
+        } else if (tableName === "3") {
+          text = guojia + " 食物摄入总量的组成结构";
+        } else if (tableName === "4") {
+          text = guojia + " 蛋白摄入量的组成结构";
+        }
+        var treeOption = {
+          color:["#f20089","#7209b7","#3a0ca3","#4361ee",
+            "#4cc9f0","#db00b6","#b100e8","#2d00f7",
+          "#6a00f4"],
+          title: {
+            text: text,
+            textStyle: {
+              color: "#ffbc42",
+              fontSize: 10,
+            },
+          },
+          toolbox: {
+            show: true,
+            feature: {
+              restore: {
+                show: false,
+              },
+            },
+          },
+          tooltip: {
+            formatter: function (info) {
+              var value = info.value;
+              var treePathInfo = info.treePathInfo;
+              var treePath = [];
+              for (var i = 1; i < treePathInfo.length; i++) {
+                treePath.push(treePathInfo[i].name);
+              }
+              return [
+                "国家: " + guojia,
+                '<div class="tooltip-title">' +
+                echarts.format.encodeHTML(treePath.join("/")) +
+                "</div>",
+                "占比: " + echarts.format.addCommas(value) + " %",
+              ].join("");
+            },
+          },
+          series: [
+            {
+              itemStyle: {
+                gapWidth: 5,
+                borderColor: "#0f2444",
+              },
+              type: "treemap",
+              leafDepth: 1,
+              data: treeData,
+              width: "90%",
+              height: "90%",
+            },
+          ],
+        };
+
+        var currentOption = treeOption;
+        mytree.setOption(currentOption);
+      });
+    }
+
+    readdata(dataName);
+  </script>
+  <!-- 地图和条形图部分 -->
+  <script>
+    // 数据要将南朝鲜北朝鲜的逗号去掉
+    // 标题类里的逗号也去掉
+    var data = [];
+    var filedata;
+
+    var filePath = "data/" + tableName.toString() + ".csv";
+
+    getCSV(filePath, function (data) {
+      filedata = CSV(data);
+      // console.log(thedata);
+    });
+
+    var data = filedata.map((item) => {
+      var tmp = item["Country"];
+      if (tmp === "United States of America") tmp = "United States";
+      else if (tmp === "Russian Federation") tmp = "Russia";
+      else if (tmp === "Iran (Islamic Republic of)") tmp = "Iran";
+      else if (tmp === "Korea North") tmp = "Dem. Rep. Korea";
+      else if (tmp === "Korea South") {
+        tmp = "Korea";
+      }
+      // console.log(tmp[0]);
+      // console.log(tmp[tmp.length - 1]);
+      return {
+        name: tmp,
+        value: parseFloat(item[col]),
+      };
+    });
+
+    var mychart = echarts.init(document.getElementById("map-bar"));
+
+    //对数据进行排序
+    data.sort(function (a, b) {
+      return a.value - b.value;
+    });
+
+    //地图的设置
+    const mapOption = {
+      //backgroundColor: "#0f2444", // 图表背景色
+      title: {
+        text: "世界各国脂肪输入来自于 " + col + " 的占比",
+        textStyle: {
+          color: "#ffbc42",
+        },
+      },
+      visualMap: {
+        left: "left",
+        min: 0,
+        max: 60,
+        inRange: {
+          // prettier-ignore
+          // color: ['#ffb600', '#ffaa00', '#ff9e00', '#ff9100', '#ff8500', '#ff7900', '#ff6d00', '#ff6000', '#ff5400', '#ff4800']
+          // color: ['#fae0e4', '#f7cad0', '#f9bec7', '#fbb1bd', '#ff99ac', '#ff85a1', '#ff7096', '#ff5c8a', '#ff477e', '#ff0a54'],
+          color: ['#ade8f4', '#90e0ef', '#48cae4', '#48cae4', '#00b4d8', '#0096c7', '#0077b6', '#023e8a'],
+        },
+        text: ["主要来源", "次要来源"], //指标大小的标签名字
+        textStyle: {
+          color: "#fff",
+        },
+        calculable: true,
+      },
+      series: [
+        {
+          id: "population",
+          type: "map", //类型为地图
+          itemStyle: {
+            areaColor: "#caf0f8",
+            borderColor: "#fff",
+          },
+          roam: true,
+          map: "world", //世界地图
+          label: {
+            color: "#ffffe0",
+            fontWeight: "bold",
+          },
+          //移动到相应区域高亮展示设置
+          emphasis: {
+            //文本
+            label: {
+              color: "#457b9d",
+            },
+            //区域颜色
+            itemStyle: {
+              areaColor: "#fffacd",
+            },
+          },
+          //选中区域之后显示设置
+          select: {
+            label: {
+              color: "#ffffe0",
+            },
+            itemStyle: {
+              areaColor: "#ff85a1",
+            },
+          },
+
+          zoom: 1.25,
+          animationDurationUpdate: 1000,
+          universalTransition: true, //过渡动画
+          data: data,
+        },
+      ],
+      tooltip: {
+        trigger: "item",
+        backgroundColor: "rgba(0,0,0,0.7)",
+        transitionDuration: 0,
+        textStyle: {
+          color: "#fff",
+          fontSize: 15,
+        },
+        formatter: "国家 :  {b}<br/>摄入占比 :  {c} %",
+      },
+      toolbox: {
+        itemSize: 30,
+        itemGap: 30,
+        right: 50,
+        feature: {
+          //保存图片按钮
+          saveAsImage: {
+            //excludeComponents :['toolbox'],
+            pixelRatio: 2,
+            iconStyle: {
+              borderColor: "#fff",
+            },
+          },
+          //撤销修改
+          restore: {
+            iconStyle: {
+              borderColor: "#fff",
+            },
+          },
+          //条状图按钮
+          mybarbotton: {
+            show: true,
+            title: "条形图",
+            icon: "image://svg/barchart.svg",
+            onclick: function () {
+              nowOption = 1;
+              changeOption(1);
+            },
+          },
+          //地图按钮
+          mymapbutton: {
+            show: true,
+            title: "世界地图",
+            icon: "image://svg/map.svg",
+            onclick: function () {
+              nowOption = 0;
+              changeOption(0);
+            },
+          },
+        },
+      },
+    };
+    const barOption = {
+      //backgroundColor: "#0f2444", // 图表背景色
+      //设置x轴为数值
+      xAxis: {
+        type: "value",
+        axisLabel: {
+          color: "#fff",
+        },
+      },
+      //y轴为自变量
+      yAxis: {
+        type: "category",
+        axisLabel: {
+          rotate: 30,
+          color: "#fff",
+        },
+        data: data.map(function (item) {
+          return item.name;
+        }),
+      },
+      //缩放
+      dataZoom: [
+        {
+          type: "inside",
+          yAxisIndex: [0], //设置为y轴折叠
+        },
+      ],
+      animationDurationUpdate: 1000,
+
+      series: {
+        type: "bar",
+        showBackground: true,
+        id: "population",
+        itemStyle: {
+          color: function (params) {
+            //循环的颜色
+            var colorList = [
+              "#ffc09f",
+              "#ffee93",
+              "#fcf5c7",
+              "#a0ced9",
+              "#adf7b6",
+            ];
+            if (params.dataIndex >= colorList.length) {
+              var index = params.dataIndex % colorList.length;
+              return colorList[index];
+            }
+            return colorList[params.dataIndex];
+          },
+        },
+        emphasis: {
+          itemStyle: {
+            color: "#ff4d6d",
+          },
+        },
+        data: data.map(function (item) {
+          return item.value;
+        }),
+        universalTransition: true,
+      },
+      //悬浮框显示信息
+      tooltip: {
+        trigger: "axis",
+        formatter: "国家 :  {b}<br/>摄入占比 :  {c} %",
+      },
+      //按钮设置
+      toolbox: {
+        itemSize: 30,
+        itemGap: 30,
+        right: 50,
+        feature: {
+          //保存图片按钮
+          saveAsImage: {
+            //excludeComponents :['toolbox'],
+            pixelRatio: 2,
+            iconStyle: {
+              borderColor: "#fff",
+            },
+          },
+          //撤销修改
+          restore: {
+            iconStyle: {
+              borderColor: "#fff",
+            },
+          },
+          //条状图按钮
+          mybarbotton: {
+            show: true,
+            title: "条形图",
+            icon: "image://svg/barchart.svg",
+            onclick: function () {
+              nowOption = 1;
+              changeOption(1);
+            },
+          },
+          //地图按钮
+          mymapbutton: {
+            show: true,
+            title: "世界地图",
+            icon: "image://svg/map.svg",
+            onclick: function () {
+              nowOption = 0;
+              changeOption(0);
+            },
+          },
+        },
+      },
+    };
+
+    mychart.setOption(mapOption, true);
+    // let currentOption = mapOption;
+    // setInterval(function () {
+    //     currentOption = currentOption === mapOption ? barOption : mapOption;
+    //     mychart.setOption(currentOption, true);
+    // }, 2000);
+    // mychart.on('click', function (params) {
+    //     console.log(params);//此处写点击事件内容
+    //     if (params.data !== undefined)
+    //         console.log(params.data.name);//此处写点击事件内容
+    //     // console.log(params[2]);//此处写点击事件内容
+    // });
+
+    //缩放范围
+    const zoomSize = 4;
+    //当前视图模式
+    var nowOption = 0;
+
+    mychart.on("click", function (params) {
+      if (nowOption === 1) {
+        //此时为条形图
+        var dataAxis = data.map(function (item) {
+          return item.name;
+        });
+        mychart.dispatchAction({
+          type: "dataZoom",
+          startValue: dataAxis[Math.max(params.dataIndex - zoomSize / 2, 0)],
+          endValue:
+            dataAxis[
+            Math.min(params.dataIndex + zoomSize / 2, data.length - 1)
+            ],
+        });
+        console.log(params.name);
+        var tmp = params.name;
+        if (tmp === "United States") tmp = "United States of America";
+        else if (tmp === "Russia") tmp = "Russian Federation";
+        else if (tmp === "Iran") tmp = "Iran (Islamic Republic of)";
+        else if (tmp === "Dem. Rep. Korea") tmp = "Korea North";
+        else if (tmp === "Korea") tmp = "Korea South";
+        guojia = tmp;
+
+        readdata(dataName);
+      } else {
+        //此时为地图
+        // console.log(params.data);//此处写点击事件内容
+        if (params.data !== undefined) {
+          var tmp = params.data.name;
+          if (tmp === "United States") tmp = "United States of America";
+          else if (tmp === "Russia") tmp = "Russian Federation";
+          else if (tmp === "Iran") tmp = "Iran (Islamic Republic of)";
+          else if (tmp === "Dem. Rep. Korea") tmp = "Korea North";
+          else if (tmp === "Korea") tmp = "Korea South";
+          guojia = tmp;
+          console.log(guojia); //此处写点击事件内容
+          readdata(dataName);
+        }
+
+        // console.log(params[2]);//此处写点击事件内容
+      }
+    });
+
+    //改变视图为地图或条形图
+    function changeOption(nowOption) {
+      if (nowOption === 0) mychart.setOption(mapOption, true);
+      else mychart.setOption(barOption, true);
+    }
+
+    //请求csv文件
+    function getCSV(url, f) {
+      let xmlHttp = new XMLHttpRequest();
+      xmlHttp.open("GET", url, false); // 同步处理返回
+      xmlHttp.onreadystatechange = function callback() {
+        if (xmlHttp.readyState === 4) {
+          //4代表执行完成
+          if (xmlHttp.status === 200) {
+            //console.log(xmlHttp.responseText);
+            f.call(this, xmlHttp.responseText);
+          }
+        }
+      };
+      xmlHttp.setRequestHeader(
+        "Content-Type",
+        "application/x-www-form-urlencoded;"
+      );
+      xmlHttp.send(null);
+    }
+
+    //csv字符串 to  Array
+    function CSV(csvString) {
+      let data = [];
+      let relArr = csvString.split("\r\n"); // '\r'
+      if (relArr.length > 1) {
+        let title = relArr[0].split(",");
+        let title_arr = title.keys();
+        for (let key = 1, len = relArr.length - 1; key < len; key++) {
+          let values = relArr[key];
+          let objArr = values.split(",");
+          let obj = {};
+          for (let i = 0; i < title.length; i++) {
+            obj[title[title_arr.next().value]] = objArr[i];
+          }
+          data.push(obj);
+          title_arr = title.keys();
+        }
+      }
+      return data;
+    }
+
+    function readData(tname) {
+      filePath = "data/" + tname + ".csv";
+      getCSV(filePath, function (data) {
+        filedata = CSV(data);
+        // console.log(thedata);
+      });
+      // console.log(filedata);
+      // var tmp = filedata[0]['"Country"'];
+      // tmp = tmp.substring(1, tmp.length + -2);
+      // console.log(tmp);
+      data = filedata.map((item) => {
+        var tmp = item["Country"];
+        if (tmp === "United States of America") tmp = "United States";
+        else if (tmp === "Russian Federation") tmp = "Russia";
+        else if (tmp === "Iran (Islamic Republic of)") tmp = "Iran";
+        else if (tmp === "Korea North") tmp = "Dem. Rep. Korea";
+        else if (tmp === "Korea South") {
+          tmp = "Korea";
+        }
+        // console.log(tmp[0]);
+        // console.log(tmp[tmp.length - 1]);
+        return {
+          name: tmp,
+          value: parseFloat(item[col]),
+        };
+      });
+      data.sort(function (a, b) {
+        return a.value - b.value;
+      });
+    }
+
+    function changeView() {
+      readData(tableName);
+      mapOption.series[0].data = data;
+      if (tableName === "1") {
+        mapOption.title.text = "世界各国脂肪摄入来自于 " + col + " 的占比";
+      } else if (tableName === "2") {
+        mapOption.title.text = "世界各国热量摄入来自于 " + col + " 的占比";
+      } else if (tableName === "3") {
+        mapOption.title.text = "世界各国食物摄入量来自于 " + col + " 的占比";
+      } else if (tableName === "4") {
+        mapOption.title.text = "世界各国蛋白摄入来自于 " + col + " 的占比";
+      }
+      barOption.series.data = data.map(function (item) {
+        return item.value;
+      });
+      barOption.yAxis.data = data.map(function (item) {
+        return item.name;
+      });
+      mychart.clear();
+      changeOption(nowOption);
+    }
+  </script>
+  <!-- 仪表盘 -->
+  <script>
+    var myChart_ = echarts.init(document.getElementById("hill"));
+    var kiddo_size = 160;
+    var p_fat = 41;
+    option_ = {
+      //backgroundColor: "#16294a", // 图表背景色
+      tooltip: {
+        formatter: "{a} <br/>{b} : {c}%",
+      },
+      toolbox: {
+        feature: {
+          restore: {},
+          saveAsImage: {},
+        },
+        show: false,
+      },
+      series: [
+        {
+          //第1个
+          radius: "60%",
+          startAngle: 180, //开始角度 左侧角度
+          endAngle: 0, //结束角度 右侧
+          type: "gauge",
+          center: ["20%", "33%"], //调整仪表盘的位置
+          axisLine: {
+            lineStyle: {
+              width: 6,
+              color: [
+                [0.25, "#4cc9f0"],
+                [0.5, "#3f37c9"],
+                [0.75, "#7209b7"],
+                [1, "#f72585"],
+              ],
+            },
+          },
+          pointer: {
+            icon: "path://M12.8,0.7l12,40.1H0.7L12.8,0.7z",
+            length: "12%",
+            width: 16,
+            offsetCenter: [0, "-60%"],
+            itemStyle: {
+              color: "auto",
+            },
+          },
+          axisTick: {
+            length: 6,
+            lineStyle: {
+              color: "auto",
+              width: 2,
+            },
+          },
+          splitLine: {
+            length: 10,
+            lineStyle: {
+              color: "auto",
+              width: 5,
+            },
+          },
+          axisLabel: {
+            color: "#464646",
+            fontSize: 20,
+            distance: -60,
+            formatter: function (value) {
+              if (value === 0.875) {
+                return "A";
+              } else if (value === 0.625) {
+                return "B";
+              } else if (value === 0.375) {
+                return "C";
+              } else if (value === 0.125) {
+                return "D";
+              }
+              return "";
+            },
+          },
+          title: {
+            offsetCenter: [0, "35%"],
+            fontSize: 20,
+            color: "#fff",
+          },
+          detail: {
+            fontSize: 20,
+            offsetCenter: [0, "0%"],
+            valueAnimation: true,
+            formatter: function (value) {
+              return Math.round(value) + "%";
+            },
+            color: "auto",
+          },
+          data: [
+            {
+              value: 13,
+              name: "谷物🌽",
+            },
+          ],
+        },
+        {
+          //第2个
+          radius: "60%",
+          startAngle: 180, //开始角度 左侧角度
+          endAngle: 0, //结束角度 右侧
+          type: "gauge",
+          center: ["40%", "33%"], //**调整仪表盘的位置**
+          axisLine: {
+            lineStyle: {
+              width: 6,
+              color: [
+                [0.25, "#4cc9f0"],
+                [0.5, "#3f37c9"],
+                [0.75, "#7209b7"],
+                [1, "#f72585"],
+              ],
+            },
+          },
+          pointer: {
+            icon: "path://M12.8,0.7l12,40.1H0.7L12.8,0.7z",
+            length: "12%",
+            width: 16,
+            offsetCenter: [0, "-60%"],
+            itemStyle: {
+              color: "auto",
+            },
+          },
+          axisTick: {
+            length: 6,
+            lineStyle: {
+              color: "auto",
+              width: 2,
+            },
+          },
+          splitLine: {
+            length: 10,
+            lineStyle: {
+              color: "auto",
+              width: 5,
+            },
+          },
+          axisLabel: {
+            color: "#464646",
+            fontSize: 20,
+            distance: -60,
+            formatter: function (value) {
+              if (value === 0.875) {
+                return "A";
+              } else if (value === 0.625) {
+                return "B";
+              } else if (value === 0.375) {
+                return "C";
+              } else if (value === 0.125) {
+                return "D";
+              }
+              return "";
+            },
+          },
+          title: {
+            offsetCenter: [0, "35%"],
+            fontSize: 20,
+            color: "#fff",
+          },
+          detail: {
+            fontSize: 20,
+            offsetCenter: [0, "0%"],
+            valueAnimation: true,
+            formatter: function (value) {
+              return Math.round(value) + "%";
+            },
+            color: "auto",
+          },
+          data: [
+            {
+              value: 13,
+              name: "蔬果🥦",
+            },
+          ],
+        },
+        {
+          //第3个
+          radius: "60%",
+          startAngle: 180, //开始角度 左侧角度
+          endAngle: 0, //结束角度 右侧
+          type: "gauge",
+          center: ["60%", "33%"], //**调整仪表盘的位置**
+          axisLine: {
+            lineStyle: {
+              width: 6,
+              color: [
+                [0.25, "#4cc9f0"],
+                [0.5, "#3f37c9"],
+                [0.75, "#7209b7"],
+                [1, "#f72585"],
+              ],
+            },
+          },
+          pointer: {
+            icon: "path://M12.8,0.7l12,40.1H0.7L12.8,0.7z",
+            length: "12%",
+            width: 16,
+            offsetCenter: [0, "-60%"],
+            itemStyle: {
+              color: "auto",
+            },
+          },
+          axisTick: {
+            length: 6,
+            lineStyle: {
+              color: "auto",
+              width: 2,
+            },
+          },
+          splitLine: {
+            length: 10,
+            lineStyle: {
+              color: "auto",
+              width: 5,
+            },
+          },
+          axisLabel: {
+            color: "#464646",
+            fontSize: 20,
+            distance: -60,
+            formatter: function (value) {
+              if (value === 0.875) {
+                return "A";
+              } else if (value === 0.625) {
+                return "B";
+              } else if (value === 0.375) {
+                return "C";
+              } else if (value === 0.125) {
+                return "D";
+              }
+              return "";
+            },
+          },
+          title: {
+            offsetCenter: [0, "35%"],
+            fontSize: 20,
+            color: "#fff",
+          },
+          detail: {
+            fontSize: 20,
+            offsetCenter: [0, "0%"],
+            valueAnimation: true,
+            formatter: function (value) {
+              return Math.round(value) + "%";
+            },
+            color: "auto",
+          },
+          data: [
+            {
+              value: 13,
+              name: "糖及糖类作物🍬",
+            },
+          ],
+        },
+        {
+          //第4个
+          radius: "60%",
+          startAngle: 180, //开始角度 左侧角度
+          endAngle: 0, //结束角度 右侧
+          type: "gauge",
+          center: ["80%", "33%"], //**调整仪表盘的位置**
+          axisLine: {
+            lineStyle: {
+              width: 6,
+              color: [
+                [0.25, "#4cc9f0"],
+                [0.5, "#3f37c9"],
+                [0.75, "#7209b7"],
+                [1, "#f72585"],
+              ],
+            },
+          },
+          pointer: {
+            icon: "path://M12.8,0.7l12,40.1H0.7L12.8,0.7z",
+            length: "12%",
+            width: 16,
+            offsetCenter: [0, "-60%"],
+            itemStyle: {
+              color: "auto",
+            },
+          },
+          axisTick: {
+            length: 6,
+            lineStyle: {
+              color: "auto",
+              width: 2,
+            },
+          },
+          splitLine: {
+            length: 10,
+            lineStyle: {
+              color: "auto",
+              width: 5,
+            },
+          },
+          axisLabel: {
+            color: "#464646",
+            fontSize: 20,
+            distance: -60,
+            formatter: function (value) {
+              if (value === 0.875) {
+                return "A";
+              } else if (value === 0.625) {
+                return "B";
+              } else if (value === 0.375) {
+                return "C";
+              } else if (value === 0.125) {
+                return "D";
+              }
+              return "";
+            },
+          },
+          title: {
+            offsetCenter: [0, "35%"],
+            fontSize: 20,
+            color: "#fff",
+          },
+          detail: {
+            fontSize: 20,
+            offsetCenter: [0, "0%"],
+            valueAnimation: true,
+            formatter: function (value) {
+              return Math.round(value) + "%";
+            },
+            color: "auto",
+          },
+          data: [
+            {
+              value: 13,
+              name: "肉类🥩",
+            },
+          ],
+        },
+        {
+          //第5个
+          radius: "60%", //仪表盘大小
+          startAngle: 180, //开始角度 左侧角度
+          endAngle: 0, //结束角度 右侧
+          type: "gauge",
+          center: ["20%", "83%"], //仪表盘的位置
+          axisLine: {
+            lineStyle: {
+              width: 6,
+              color: [
+                [0.25, "#4cc9f0"],
+                [0.5, "#3f37c9"],
+                [0.75, "#7209b7"],
+                [1, "#f72585"],
+              ],
+            },
+          },
+          pointer: {
+            icon: "path://M12.8,0.7l12,40.1H0.7L12.8,0.7z",
+            length: "12%",
+            width: 16,
+            offsetCenter: [0, "-60%"],
+            itemStyle: {
+              color: "auto",
+            },
+          },
+          axisTick: {
+            length: 6,
+            lineStyle: {
+              color: "auto",
+              width: 2,
+            },
+          },
+          splitLine: {
+            length: 10,
+            lineStyle: {
+              color: "auto",
+              width: 5,
+            },
+          },
+          axisLabel: {
+            color: "#464646",
+            fontSize: 20,
+            distance: -60,
+            formatter: function (value) {
+              if (value === 0.875) {
+                return "A";
+              } else if (value === 0.625) {
+                return "B";
+              } else if (value === 0.375) {
+                return "C";
+              } else if (value === 0.125) {
+                return "D";
+              }
+              return "";
+            },
+          },
+          title: {
+            offsetCenter: [0, "35%"],
+            fontSize: 20,
+            color: "#fff",
+          },
+          detail: {
+            fontSize: 20,
+            offsetCenter: [0, "0%"],
+            valueAnimation: true,
+            formatter: function (value) {
+              return Math.round(value) + "%";
+            },
+            color: "auto",
+          },
+          data: [
+            {
+              value: 12,
+              name: "蛋类🥚",
+            },
+          ],
+        },
+        {
+          //第6个
+          radius: "60%",
+          startAngle: 180, //开始角度 左侧角度
+          endAngle: 0, //结束角度 右侧
+          type: "gauge",
+          center: ["40%", "83%"], //**调整仪表盘的位置**
+          axisLine: {
+            lineStyle: {
+              width: 6,
+              color: [
+                [0.25, "#4cc9f0"],
+                [0.5, "#3f37c9"],
+                [0.75, "#7209b7"],
+                [1, "#f72585"],
+              ],
+            },
+          },
+          pointer: {
+            icon: "path://M12.8,0.7l12,40.1H0.7L12.8,0.7z",
+            length: "12%",
+            width: 16,
+            offsetCenter: [0, "-60%"],
+            itemStyle: {
+              color: "auto",
+            },
+          },
+          axisTick: {
+            length: 6,
+            lineStyle: {
+              color: "auto",
+              width: 2,
+            },
+          },
+          splitLine: {
+            length: 10,
+            lineStyle: {
+              color: "auto",
+              width: 5,
+            },
+          },
+          axisLabel: {
+            color: "#464646",
+            fontSize: 20,
+            distance: -60,
+            formatter: function (value) {
+              if (value === 0.875) {
+                return "A";
+              } else if (value === 0.625) {
+                return "B";
+              } else if (value === 0.375) {
+                return "C";
+              } else if (value === 0.125) {
+                return "D";
+              }
+              return "";
+            },
+          },
+          title: {
+            offsetCenter: [0, "35%"],
+            fontSize: 20,
+            color: "#fff",
+          },
+          detail: {
+            fontSize: 20,
+            offsetCenter: [0, "0%"],
+            valueAnimation: true,
+            formatter: function (value) {
+              return Math.round(value) + "%";
+            },
+            color: "auto",
+          },
+          data: [
+            {
+              value: 12,
+              name: "奶类🥛",
+            },
+          ],
+        },
+        {
+          //第7个
+          radius: "60%",
+          startAngle: 180, //开始角度 左侧角度
+          endAngle: 0, //结束角度 右侧
+          type: "gauge",
+          center: ["60%", "83%"], //**调整仪表盘的位置**
+          axisLine: {
+            lineStyle: {
+              width: 6,
+              color: [
+                [0.25, "#4cc9f0"],
+                [0.5, "#3f37c9"],
+                [0.75, "#7209b7"],
+                [1, "#f72585"],
+              ],
+            },
+          },
+          pointer: {
+            icon: "path://M12.8,0.7l12,40.1H0.7L12.8,0.7z",
+            length: "12%",
+            width: 16,
+            offsetCenter: [0, "-60%"],
+            itemStyle: {
+              color: "auto",
+            },
+          },
+          axisTick: {
+            length: 6,
+            lineStyle: {
+              color: "auto",
+              width: 2,
+            },
+          },
+          splitLine: {
+            length: 10,
+            lineStyle: {
+              color: "auto",
+              width: 5,
+            },
+          },
+          axisLabel: {
+            color: "#464646",
+            fontSize: 20,
+            distance: -60,
+            formatter: function (value) {
+              if (value === 0.875) {
+                return "A";
+              } else if (value === 0.625) {
+                return "B";
+              } else if (value === 0.375) {
+                return "C";
+              } else if (value === 0.125) {
+                return "D";
+              }
+              return "";
+            },
+          },
+          title: {
+            offsetCenter: [0, "35%"],
+            fontSize: 20,
+            color: "#fff",
+          },
+          detail: {
+            fontSize: 20,
+            offsetCenter: [0, "0%"],
+            valueAnimation: true,
+            formatter: function (value) {
+              return Math.round(value) + "%";
+            },
+            color: "auto",
+          },
+          data: [
+            {
+              value: 12,
+              name: "酒精饮料🍺",
+            },
+          ],
+        },
+        {
+          //第8个
+          radius: "60%",
+          startAngle: 180, //开始角度 左侧角度
+          endAngle: 0, //结束角度 右侧
+          type: "gauge",
+          center: ["80%", "83%"], //**调整仪表盘的位置**
+          axisLine: {
+            lineStyle: {
+              width: 6,
+              color: [
+                [0.25, "#4cc9f0"],
+                [0.5, "#3f37c9"],
+                [0.75, "#7209b7"],
+                [1, "#f72585"],
+              ],
+            },
+          },
+          pointer: {
+            icon: "path://M12.8,0.7l12,40.1H0.7L12.8,0.7z",
+            length: "12%",
+            width: 16,
+            offsetCenter: [0, "-60%"],
+            itemStyle: {
+              color: "auto",
+            },
+          },
+          axisTick: {
+            length: 6,
+            lineStyle: {
+              color: "auto",
+              width: 2,
+            },
+          },
+          splitLine: {
+            length: 10,
+            lineStyle: {
+              color: "auto",
+              width: 5,
+            },
+          },
+          axisLabel: {
+            color: "#464646",
+            fontSize: 20,
+            distance: -60,
+            formatter: function (value) {
+              if (value === 0.875) {
+                return "A";
+              } else if (value === 0.625) {
+                return "B";
+              } else if (value === 0.375) {
+                return "C";
+              } else if (value === 0.125) {
+                return "D";
+              }
+              return "";
+            },
+          },
+          title: {
+            offsetCenter: [0, "35%"],
+            fontSize: 20,
+            color: "#fff",
+          },
+          detail: {
+            fontSize: 20,
+            offsetCenter: [0, "0%"],
+            valueAnimation: true,
+            formatter: function (value) {
+              return Math.round(value) + "%";
+            },
+            color: "auto",
+          },
+          data: [
+            {
+              value: 12,
+              name: "鱼和海鲜🐟",
+            },
+          ],
+        },
+      ],
+    };
+
+    myChart_.setOption(option_, true);
+    var gauge = document.getElementById("hill"); //getElementById方法可返回对拥有指定id的第一个对象的引用
+    var { width, height } = getComputedStyle(gauge);
+    var width_num = parseInt(width);
+    var height_num = parseInt(height);
+    var minAngle = 0;
+    var maxAngle = 180;
+    var maxValue = 100;
+    var dataRatio = maxValue / maxAngle;
+
+    function changeValue(event) {
+      var x = event.offsetX;
+      var y = event.offsetY;
+      // console.log(x);
+      // console.log(y);
+
+      if (
+        //第1个
+        x > 0.2 * width_num - 0.3 * height_num &&
+        x < 0.2 * width_num + 0.3 * height_num &&
+        y < 0.35 * height_num &&
+        y > 0
+      ) {
+        // 当前点击位置的角度.
+        var currentAngle =
+          (Math.atan2(0.33 * height_num - y, 0.2 * width_num - x) * 180) /
+          Math.PI;
+        // 边界处理
+
+        if (currentAngle < minAngle || currentAngle > maxAngle) {
+          let _angle = Math.abs(currentAngle);
+          if (_angle > 90) {
+            currentAngle = maxAngle;
+          } else {
+            currentAngle = minAngle;
+          }
+        }
+        // 转换回数据值, 这里就是实际的值, 默认保留2位小数.
+        let value = (currentAngle * dataRatio).toFixed(2);
+
+        option_.series[0].data[0].value = value;
+      } else if (
+        //第2个
+        x > 0.4 * width_num - 0.3 * height_num &&
+        x < 0.4 * width_num + 0.3 * height_num &&
+        y < 0.35 * height_num &&
+        y > 0
+      ) {
+        // 当前点击位置的角度.
+        var currentAngle =
+          (Math.atan2(0.33 * height_num - y, 0.4 * width_num - x) * 180) /
+          Math.PI;
+        // 边界处理
+
+        if (currentAngle < minAngle || currentAngle > maxAngle) {
+          let _angle = Math.abs(currentAngle);
+          if (_angle > 90) {
+            currentAngle = maxAngle;
+          } else {
+            currentAngle = minAngle;
+          }
+        }
+        // 转换回数据值, 这里就是实际的值, 默认保留2位小数.
+        let value = (currentAngle * dataRatio).toFixed(2);
+
+        option_.series[1].data[0].value = value;
+      } else if (
+        //第3个
+        x > 0.6 * width_num - 0.3 * height_num &&
+        x < 0.6 * width_num + 0.3 * height_num &&
+        y < 0.35 * height_num &&
+        y > 0
+      ) {
+        // 当前点击位置的角度.
+        var currentAngle =
+          (Math.atan2(0.33 * height_num - y, 0.6 * width_num - x) * 180) /
+          Math.PI;
+        // 边界处理
+
+        if (currentAngle < minAngle || currentAngle > maxAngle) {
+          let _angle = Math.abs(currentAngle);
+          if (_angle > 90) {
+            currentAngle = maxAngle;
+          } else {
+            currentAngle = minAngle;
+          }
+        }
+        // 转换回数据值, 这里就是实际的值, 默认保留2位小数.
+        let value = (currentAngle * dataRatio).toFixed(2);
+
+        option_.series[2].data[0].value = value;
+      } else if (
+        //第4个
+        x > 0.8 * width_num - 0.3 * height_num &&
+        x < 0.8 * width_num + 0.3 * height_num &&
+        y < 0.35 * height_num &&
+        y > 0
+      ) {
+        // 当前点击位置的角度.
+        var currentAngle =
+          (Math.atan2(0.33 * height_num - y, 0.8 * width_num - x) * 180) /
+          Math.PI;
+        // 边界处理
+
+        if (currentAngle < minAngle || currentAngle > maxAngle) {
+          let _angle = Math.abs(currentAngle);
+          if (_angle > 90) {
+            currentAngle = maxAngle;
+          } else {
+            currentAngle = minAngle;
+          }
+        }
+        // 转换回数据值, 这里就是实际的值, 默认保留2位小数.
+        let value = (currentAngle * dataRatio).toFixed(2);
+
+        option_.series[3].data[0].value = value;
+      } else if (
+        //第5个
+        x > 0.2 * width_num - 0.3 * height_num &&
+        x < 0.2 * width_num + 0.3 * height_num &&
+        y < height_num &&
+        y > 0.53 * height_num
+      ) {
+        // 当前点击位置的角度.
+        var currentAngle =
+          (Math.atan2(0.83 * height_num - y, 0.2 * width_num - x) * 180) /
+          Math.PI;
+        // 边界处理
+
+        if (currentAngle < minAngle || currentAngle > maxAngle) {
+          let _angle = Math.abs(currentAngle);
+          if (_angle > 90) {
+            currentAngle = maxAngle;
+          } else {
+            currentAngle = minAngle;
+          }
+        }
+        // 转换回数据值, 这里就是实际的值, 默认保留2位小数.
+        let value = (currentAngle * dataRatio).toFixed(2);
+
+        option_.series[4].data[0].value = value;
+      } else if (
+        //第6个
+        x > 0.4 * width_num - 0.3 * height_num &&
+        x < 0.4 * width_num + 0.3 * height_num &&
+        y < height_num &&
+        y > 0.53 * height_num
+      ) {
+        // 当前点击位置的角度.
+        var currentAngle =
+          (Math.atan2(0.83 * height_num - y, 0.4 * width_num - x) * 180) /
+          Math.PI;
+        // 边界处理
+
+        if (currentAngle < minAngle || currentAngle > maxAngle) {
+          let _angle = Math.abs(currentAngle);
+          if (_angle > 90) {
+            currentAngle = maxAngle;
+          } else {
+            currentAngle = minAngle;
+          }
+        }
+        // 转换回数据值, 这里就是实际的值, 默认保留2位小数.
+        let value = (currentAngle * dataRatio).toFixed(2);
+
+        option_.series[5].data[0].value = value;
+      } else if (
+        //第7个
+        x > 0.6 * width_num - 0.3 * height_num &&
+        x < 0.6 * width_num + 0.3 * height_num &&
+        y < height_num &&
+        y > 0.53 * height_num
+      ) {
+        // 当前点击位置的角度.
+        var currentAngle =
+          (Math.atan2(0.83 * height_num - y, 0.6 * width_num - x) * 180) /
+          Math.PI;
+        // 边界处理
+
+        if (currentAngle < minAngle || currentAngle > maxAngle) {
+          let _angle = Math.abs(currentAngle);
+          if (_angle > 90) {
+            currentAngle = maxAngle;
+          } else {
+            currentAngle = minAngle;
+          }
+        }
+        // 转换回数据值, 这里就是实际的值, 默认保留2位小数.
+        let value = (currentAngle * dataRatio).toFixed(2);
+
+        option_.series[6].data[0].value = value;
+      } else if (
+        //第8个
+        x > 0.8 * width_num - 0.3 * height_num &&
+        x < 0.8 * width_num + 0.3 * height_num &&
+        y < height_num &&
+        y > 0.53 * height_num
+      ) {
+        // 当前点击位置的角度.
+        var currentAngle =
+          (Math.atan2(0.83 * height_num - y, 0.8 * width_num - x) * 180) /
+          Math.PI;
+        // 边界处理
+
+        if (currentAngle < minAngle || currentAngle > maxAngle) {
+          let _angle = Math.abs(currentAngle);
+          if (_angle > 90) {
+            currentAngle = maxAngle;
+          } else {
+            currentAngle = minAngle;
+          }
+        }
+        // 转换回数据值, 这里就是实际的值, 默认保留2位小数.
+        let value = (currentAngle * dataRatio).toFixed(2);
+
+        option_.series[7].data[0].value = value;
+      }
+      kiddo_size =
+        0.5 *
+        (parseFloat(option_.series[0].data[0].value) +
+          0.5 * parseFloat(option_.series[1].data[0].value) +
+          5 * parseFloat(option_.series[2].data[0].value) +
+          5 * parseFloat(option_.series[3].data[0].value) +
+          2 * parseFloat(option_.series[4].data[0].value) +
+          3 * parseFloat(option_.series[5].data[0].value) +
+          5 * parseFloat(option_.series[6].data[0].value) +
+          3.5 * parseFloat(option_.series[7].data[0].value));
+      p_fat = 100 / (1 + Math.pow(2.7, -kiddo_size / 10 + 15)) - 22.5;
+      if (p_fat <= 0) p_fat = 2.0;
+      console.log(p_fat);
+      if (p_fat < 5) {
+        option1.title.text = "患肥胖概率: " + p_fat + "%";
+        option1.series[0].data[0].symbol = "image://svg/10.jpg";
+      } else if (p_fat < 10) {
+        option1.title.text = "患肥胖概率: " + p_fat + "%";
+        option1.series[0].data[0].symbol = "image://svg/9.jpg";
+      } else if (p_fat < 16) {
+        option1.title.text = "患肥胖概率: " + p_fat + "%";
+        option1.series[0].data[0].symbol = "image://svg/8.jpg";
+      } else if (p_fat < 22) {
+        option1.title.text = "患肥胖概率: " + p_fat + "%";
+        option1.series[0].data[0].symbol = "image://svg/7.jpg";
+      } else if (p_fat < 29) {
+        option1.title.text = "患肥胖概率: " + p_fat + "%";
+        option1.series[0].data[0].symbol = "image://svg/6.jpg";
+      } else if (p_fat < 37) {
+        option1.title.text = "患肥胖概率: " + p_fat + "%";
+        option1.series[0].data[0].symbol = "image://svg/5.jpg";
+      } else if (p_fat < 46) {
+        option1.title.text = "患肥胖概率: " + p_fat + "%";
+        option1.series[0].data[0].symbol = "image://svg/4.jpg";
+      } else if (p_fat < 56) {
+        option1.title.text = "患肥胖概率: " + p_fat + "%";
+        option1.series[0].data[0].symbol = "image://svg/3.jpg";
+      } else if (p_fat < 67) {
+        option1.title.text = "患肥胖概率: " + p_fat + "%";
+        option1.series[0].data[0].symbol = "image://svg/2.jpg";
+      } else {
+        option1.title.text = "患肥胖概率: " + p_fat + "%";
+        option1.series[0].data[0].symbol = "image://svg/1.jpg";
+      }
+      // option1.series[0].data[0].symbolSize[0] = kiddo_size; //改变图片大小
+      // option1.series[0].data[0].symbolSize[1] = kiddo_size; //改变图片大小
+      // console.log("p_fat:");
+      // console.log(p_fat);
+      yourChart.setOption(option1);
+      myChart_.setOption(option_);
+    }
+
+    myChart_._zr.on("mousedown", function (event) {
+      changeValue(event);
+      myChart_._zr.on("mousemove", changeValue);
+    });
+    myChart_._zr.on("mouseup", function (event) {
+      myChart_._zr.off("mousemove", changeValue);
+    });
+
+    var yourChart = echarts.init(document.getElementById("svg"));
+    option1 = {
+      animationDuration: 0,
+      //backgroundColor: "#fff",
+      title: {
+        text: "患肥胖概率:" + p_fat,
+        textStyle: {
+          color: "#f15bb5",
+        },
+      },
+      xAxis: {
+        data: [""],
+        axisTick: { show: false },
+        axisLine: { show: false },
+        axisLabel: {
+          color: "#e54035",
+        },
+      },
+      yAxis: {
+        splitLine: { show: false },
+        axisTick: { show: false },
+        axisLine: { show: false },
+        axisLabel: { show: false },
+      },
+      color: ["#e54035"],
+      series: [
+        {
+          center: ["0%", "0%"],
+          name: "glyph",
+          type: "pictorialBar",
+          // barGap: "-100%",
+          // symbolPosition: "end",
+          symbolSize: 80,
+          symbolOffset: [0, "40%"],
+          data: [
+            {
+              value: 27,
+              // symbol: pathSymbols.reindeer,
+              symbol: "image://svg/4.jpg",
+              symbolSize: [270, 180], //图片大小
+            },
+          ],
+        },
+      ],
+    };
+
+    yourChart.setOption(option1);
+  </script>
+  <!-- d3堆叠条形图 -->
+  <script>
+    var total_length = Array();
+    var original_length = Array();
+    var dataset = Array();
+    var feature_names = Array();
+    var country_names = Array();
+    var obesity_values = Array();
+    var colors1 = [
+      "#f94144",
+      "#f3722c",
+      "#f8961e",
+      "#f9844a",
+      "#f9c74f",
+      "#90be6d",
+      "#43aa8b",
+      "#4d908e",
+      "#577590",
+    ];
+    colors1 = colors1.reverse();
+    var height = 470;
+    var width = 350;
+
+    var svg = d3.select("body")
+                .select("#nsy")
+                .append("svg")
+                .attr("height", height)
+                .attr("width", width)
+                // .attr('transform','translate(20,0)');
+
+    var start_x = 90;
+    var start_y = 50;
+    var recheight = 30;
+    var order = 1; // 表示当前状态，1表示显示前十个，0表示显示后十个
+    var get_names = 1;
+
+    readAndDraw();
+
+    function readAndDraw() {
+      d3.csv("data/3.csv").then((data) => {
+        dataset = Array();
+        total_length = Array();
+        original_length = Array();
+        getFeatureNames(data);
+        getOrderedData(data);
+
+        drawRect();
+        drawTextRect();
+      });
+    }
+
+    function getFeatureNames(data) {
+      if (get_names === 1) {
+        let index = 0;
+        for (let key in data[0]) {
+          if (index >= 1 && index <= 9) feature_names.push(key);
+          index += 1;
+        }
+        get_names = 0;
+      }
+      console.log(feature_names);
+    }
+
+    function drawAxis() {
+      // 横轴
+      xScale = d3
+        .scaleLinear()
+        .domain([0, d3.max(obesity_values)])
+        .range([0, d3.max(total_length)]);
+
+      var xAxis = d3.axisBottom(xScale);
+      svg.select(".gx").remove();
+      svg
+        .append("g")
+        .attr("class", "gx")
+        .attr("transform", "translate(" + start_x + "," + (start_y + 390) + ")")
+
+        .call(xAxis);
+
+      // 纵轴
+      var yScale = d3
+        .scaleBand()
+        .domain(country_names)
+        .range([start_y, start_y + 390]);
+
+      var yAxis = d3.axisLeft(yScale);
+      svg.select(".yg").remove();
+
+      svg
+        .append("g")
+        .attr("class", "yg")
+        .attr("transform", "translate(89,0)")
+        .call(yAxis);
+    }
+
+    function drawRect() {
+      drawAxis();
+      for (let i = 0; i < dataset.length; i++)
+        svg.selectAll(".rect" + i).remove();
+
+      for (let i = 0; i < dataset.length; i++) {
+        let sum_start = 0;
+        console.log(total_length[i]);
+        svg
+          .selectAll(".rect" + i)
+          .data(dataset[i])
+          .enter()
+          .append("rect")
+          .attr("class", "rect" + i)
+          .attr("x", (d, j) => {
+            if (j === 0) sum_start += start_x;
+            else
+              sum_start +=
+                (dataset[i][j - 1] / d3.sum(dataset[i])) * total_length[i];
+            return sum_start;
+          })
+          .attr("y", (d, j) => {
+            return start_y + i * (recheight + 10);
+          })
+          .attr("width", (d, j) => {
+            return (d / d3.sum(dataset[i])) * total_length[i];
+          })
+          .attr("height", recheight)
+          .attr("fill", (d, j) => {
+            return colors1[j];
+          })
+          .on("click", () => {
+            total_length[i] = 150;
+            changeRect(i);
+            drawAxis();
+          })
+          .on("dblclick", () => {
+            total_length[i] = original_length[i];
+            changeRect(i);
+            drawAxis();
+          });
+      }
+    }
+
+    function getOrderedData(data) {
+      if (order === 1)
+        data.sort((a, b) => {
+          return b.Obesity - a.Obesity;
+        });
+      else
+        data.sort((a, b) => {
+          return a.Obesity - b.Obesity;
+        });
+      //前十或后十Obesity
+      country_names = Array();
+      obesity_values = Array();
+      for (let i = 0; i < 10; i++) {
+        obesity_values.push(parseFloat(data[i].Obesity));
+        country_names.push(data[i].Country);
+        //取前十个特征
+        if (order === 1) {
+          total_length.push(data[i].Obesity * 3);
+          original_length.push(data[i].Obesity * 3);
+        } else {
+          total_length.push(data[i].Obesity * 30);
+          original_length.push(data[i].Obesity * 30);
+        }
+        const first10Entries = Object.entries(data[i]).filter(
+          (_, index) => index > 0 && index <= 9
+        );
+        const obj = Object.fromEntries(
+          first10Entries.map(([key, value]) => [
+            key,
+            isNaN(+value) ? value : +value,
+          ])
+        );
+        // console.log(obj);
+        let data_temp = Array();
+        for (let key in obj) data_temp.push(obj[key]);
+        dataset.push(data_temp);
+      }
+      //改变 order 的值
+      order = order === 1 ? 0 : 1;
+    }
+
+    function changeRect(i) {
+      let sum_start = 0;
+      d3.selectAll(".rect" + i)
+        .transition()
+        .duration(500)
+        .attr("x", (d, j) => {
+          if (j === 0) sum_start += start_x;
+          else
+            sum_start +=
+              (dataset[i][j - 1] / d3.sum(dataset[i])) * total_length[i];
+          return sum_start;
+        })
+        .attr("width", (d, j) => {
+          return (d / d3.sum(dataset[i])) * total_length[i];
+        });
+    }
+
+    function drawTextRect() {
+      svg
+        .selectAll(".textRect")
+        .data(feature_names)
+        .enter()
+        .append("rect")
+        .attr("class", "textRect")
+        .attr("x", 150 + start_x)
+        .attr("y", (d, i) => {
+          return start_y + i * (recheight + 15);
+        })
+        .attr("width", 20)
+        .attr("height", 10)
+        .attr("fill", (d, i) => {
+          return colors1[i];
+        });
+
+      svg
+        .selectAll("rectText")
+        .data(feature_names)
+        .enter()
+        .append("text")
+        .attr("class", "rectText")
+        .attr("x", 170 + start_x)
+        .attr("y", (d, i) => {
+          return start_y + i * (recheight + 15) + 10;
+        })
+        .attr("font-size", 10)
+        .attr("text-anchor", "left")
+        .style("user-select", "none")
+        .attr("fill", "white")
+        .text((d) => {
+          return d;
+        });
+    }
+  </script>
+</body>
+
+</html>

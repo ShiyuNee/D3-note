@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Visualization Project</title>
+  <script src="http://d3js.org/d3.v5.min.js" charset="utf-8"></script>
+  <!--  <script src="http://d3js.org/d3.v4.min.js" charset="utf-8"></script>-->
+  <style>
+    .gx path,
+    .gx line {
+      fill: none;
+      stroke: black;
+      shape-rendering: crispEdges;
+    }
+
+    .gx text {
+      font-family: sans-serif;
+      font-size: 11px;
+    }
+
+    .button-56 {
+      align-items: center;
+      background-color: #fee6e3;
+      border: 2px solid #111;
+      border-radius: 8px;
+      box-sizing: border-box;
+      color: #111;
+      cursor: pointer;
+      display: flex;
+      font-family: Inter, sans-serif;
+      font-size: 16px;
+      height: 48px;
+      justify-content: center;
+      line-height: 24px;
+      max-width: 100%;
+      padding: 0 25px;
+      position: absolute;
+      left: 650px;
+      top: 100px;
+      text-align: center;
+      text-decoration: none;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    .button-56:after {
+      background-color: #111;
+      border-radius: 8px;
+      content: "";
+      display: block;
+      height: 48px;
+      left: 0;
+      width: 100%;
+      position: absolute;
+      top: -2px;
+      transform: translate(8px, 8px);
+      transition: transform .2s ease-out;
+      z-index: -1;
+    }
+
+    .button-56:hover:after {
+      transform: translate(0, 0);
+    }
+
+    .button-56:active {
+      background-color: #ffdeda;
+      outline: 0;
+    }
+
+    .button-56:hover {
+      outline: 0;
+    }
+
+    @media (min-width: 768px) {
+      .button-56 {
+        padding: 0 40px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+<div class="div1">
+  <button class="button-56" role="button" onclick="readAndDraw()">Change Order</button>
+</div>
+</body>
+<script>
+  var total_length = Array()
+  var original_length = Array()
+  var dataset = Array()
+  var feature_names = Array()
+  var country_names = Array()
+  var obesity_values = Array()
+  var colors = ['#f94144', '#f3722c', '#f8961e', '#f9844a', '#f9c74f', '#90be6d', '#43aa8b', '#4d908e', '#577590',]
+  colors = colors.reverse()
+  var height = 1000
+  var width = 1500
+  d3.select('body')
+          .select('.div1')
+          .style('height', '1000px')
+          .style('width', '1500px')
+
+  var svg = d3.select('body')
+          .select('.div1')
+          .append('svg')
+          .attr('height', height)
+          .attr('width', width)
+          .attr('transform', 'translate(300,150)')
+
+  var start_x = 125
+  var start_y = 10
+  var recheight = 30
+  var order = 1 // 表示当前状态，1表示显示前十个，0表示显示后十个
+  var get_names = 1
+
+  readAndDraw()
+
+  function readAndDraw() {
+    d3.csv('data/3.csv').then((data) => {
+      dataset = Array()
+      total_length = Array()
+      original_length = Array()
+      getFeatureNames(data)
+      getOrderedData(data)
+
+      drawRect()
+      drawTextRect()
+    })
+  }
+
+  function getFeatureNames(data) {
+    if (get_names === 1) {
+      let index = 0
+      for (let key in data[0]) {
+        if (index >= 1 && index <= 9)
+          feature_names.push(key)
+        index += 1
+      }
+      get_names = 0
+    }
+    console.log(feature_names)
+  }
+
+  function drawAxis() {
+    // 横轴
+    xScale = d3.scaleLinear()
+            .domain([0, d3.max(obesity_values)])
+            .range([0, d3.max(total_length)])
+
+    var xAxis = d3.axisBottom(xScale)
+    svg.select('.gx').remove()
+    svg.append('g')
+            .attr('class', 'gx')
+            .attr('transform', 'translate(' + start_x + ',' + (start_y + 390) + ')')
+            .call(xAxis)
+
+    // 纵轴
+    var yScale = d3.scaleBand()
+            .domain(country_names)
+            .range([start_y, start_y + 390])
+
+    var yAxis = d3.axisLeft(yScale)
+    svg.select('.yg')
+            .remove()
+
+    svg.append('g')
+            .attr('class', 'yg')
+            .attr('transform', 'translate(120,0)')
+            .call(yAxis)
+  }
+
+  function drawRect() {
+    drawAxis()
+    for (let i = 0; i < dataset.length; i++)
+      svg.selectAll('.rect' + i).remove()
+
+    for (let i = 0; i < dataset.length; i++) {
+      let sum_start = 0
+      console.log(total_length[i])
+      svg.selectAll('.rect' + i)
+              .data(dataset[i])
+              .enter()
+              .append('rect')
+              .attr('class', 'rect' + i)
+              .attr('x', (d, j) => {
+                if (j === 0)
+                  sum_start += start_x
+                else
+                  sum_start += (dataset[i][j - 1] / d3.sum(dataset[i])) * total_length[i]
+                return sum_start
+              })
+              .attr('y', (d, j) => {
+                return start_y + i * (recheight + 10)
+              })
+              .attr('width', (d, j) => {
+                return (d / d3.sum(dataset[i])) * total_length[i]
+              })
+              .attr('height', recheight)
+              .attr('fill', (d, j) => {
+                return colors[j]
+              })
+              .on('click', () => {
+                total_length[i] = 800
+                changeRect(i)
+                drawAxis()
+              })
+              .on('dblclick', () => {
+                total_length[i] = original_length[i]
+                changeRect(i)
+                drawAxis()
+              })
+    }
+  }
+
+  function getOrderedData(data) {
+    if (order === 1)
+      data.sort((a, b) => {
+        return b.Obesity - a.Obesity
+      })
+    else
+      data.sort((a, b) => {
+        return a.Obesity - b.Obesity
+      })
+    //前十或后十Obesity
+    country_names = Array()
+    obesity_values = Array()
+    for (let i = 0; i < 10; i++) {
+
+      obesity_values.push(parseFloat(data[i].Obesity))
+      country_names.push(data[i].Country)
+      //取前十个特征
+      if (order === 1) {
+        total_length.push(data[i].Obesity * 15)
+        original_length.push(data[i].Obesity * 15)
+      }
+      else {
+        total_length.push(data[i].Obesity * 40)
+        original_length.push(data[i].Obesity * 40)
+      }
+      const first10Entries = Object.entries(data[i]).filter((_, index) => index > 0 && index <= 9);
+      const obj = Object.fromEntries(first10Entries.map(([key, value]) => [key, isNaN(+value) ? value : +value]));
+      // console.log(obj);
+      let data_temp = Array()
+      for (let key in obj)
+        data_temp.push(obj[key])
+      dataset.push(data_temp)
+    }
+    //改变 order 的值
+    order = order === 1 ? 0 : 1
+  }
+
+  function changeRect(i) {
+    let sum_start = 0
+    d3.selectAll('.rect' + i)
+            .transition()
+            .duration(1000)
+            .attr('x', (d, j) => {
+              if (j === 0)
+                sum_start += start_x
+              else
+                sum_start += (dataset[i][j - 1] / d3.sum(dataset[i])) * total_length[i]
+              return sum_start
+            })
+            .attr('width', (d, j) => {
+              return (d / d3.sum(dataset[i])) * total_length[i]
+            })
+  }
+
+  function drawTextRect() {
+    svg.selectAll('.textRect')
+            .data(feature_names)
+            .enter()
+            .append('rect')
+            .attr('class', 'textRect')
+            .attr('x', 800 + start_x)
+            .attr('y', (d, i) => {
+              return start_y + i * (recheight + 15)
+            })
+            .attr('width', 20)
+            .attr('height', 10)
+            .attr('fill', (d, i) => {
+              return colors[i]
+            })
+
+    svg.selectAll('rectText')
+            .data(feature_names)
+            .enter()
+            .append('text')
+            .attr('class', 'rectText')
+            .attr('x', 820 + start_x)
+            .attr('y', (d, i) => {
+              return start_y + i * (recheight + 15) + 10
+            })
+            .attr('font-size', 15)
+            .attr('text-anchor', 'left')
+            .style('user-select', 'none')
+            .text((d) => {
+              return d
+            })
+  }
+</script>
+
+</html>
